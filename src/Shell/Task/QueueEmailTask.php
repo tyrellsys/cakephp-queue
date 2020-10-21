@@ -6,6 +6,8 @@ use Cake\Console\ConsoleIo;
 use Cake\Core\Configure;
 use Cake\Log\Log;
 use Cake\Mailer\Mailer;
+use Cake\Mailer\Message;
+use Cake\Mailer\TransportFactory;
 use Cake\ORM\Locator\LocatorInterface;
 use Queue\Model\QueueException;
 use Throwable;
@@ -124,6 +126,15 @@ class QueueEmailTask extends QueueTask implements AddInterface {
 			if (!$result) {
 				throw new QueueException('Could not send email.');
 			}
+
+			return;
+		}
+
+		$message = $data['settings'];
+		if ($message instanceof Message) {
+			$name = $data['transport'] ?? 'default';
+			$transport = TransportFactory::get($name);
+			$transport->send($message);
 
 			return;
 		}

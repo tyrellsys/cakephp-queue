@@ -5,6 +5,9 @@ namespace Queue\Test\TestCase\Shell\Task;
 use Cake\Console\ConsoleIo;
 use Cake\Datasource\ConnectionManager;
 use Cake\Mailer\Mailer;
+use Cake\Mailer\Message;
+use Cake\Mailer\Transport\DebugTransport;
+use Cake\Mailer\TransportFactory;
 use Cake\TestSuite\TestCase;
 use Queue\Shell\Task\QueueEmailTask;
 use Shim\TestSuite\ConsoleOutput;
@@ -111,6 +114,31 @@ class QueueEmailTaskTest extends TestCase {
 
 		$result = $testMailer->getDebug();
 		$this->assertTextContains('Foo Bar', $result['message']);
+	}
+
+	/**
+	 * @return void
+	 */
+	public function testRunWithMailerMessageObject() {
+		$message = new Message();
+		$message->setFrom('test@test.de');
+		$message->setTo('test@test.de');
+		$message->setBodyText('Testing Message');
+
+		$mock = $this->getMockBuilder(DebugTransport::class)
+			->onlyMethods(['send'])
+			->getMock();
+		$mock->expects($this->once())
+			->method('send')
+			->with($message);
+		TransportFactory::setConfig('test', $mock);
+
+		$data = [
+			'transport' => 'test',
+			'settings' => $message,
+		];
+
+		$this->Task->run($data, 0);
 	}
 
 	/**
